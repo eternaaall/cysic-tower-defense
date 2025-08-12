@@ -5,4 +5,4 @@ RUN npm install --production=false && npm cache clean --force
 COPY apps/api ./
 RUN npm run build
 ENV NODE_ENV=production
-CMD ["node","--env-file=.env","dist/index.js"]
+CMD ["node","dist/index.cjs"]
