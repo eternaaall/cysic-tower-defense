@@ -1,0 +1,4 @@
+import { Outlet, Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
+import React from 'react'
+export default function App(){return(<div style={{display:'flex',flexDirection:'column',minHeight:'100%'}}><motion.nav className='nav' initial={{y:-20,opacity:0}} animate={{y:0,opacity:1}} transition={{type:'spring',stiffness:120}}><div className='brand'><img className='logo' src='/cysic-logo.png' alt='Cysic'/><Link to='/'>Cysic Tower Defense</Link></div><div style={{flex:1}}/><Link to='/'>Play</Link><Link to='/leaderboard'>Leaderboard</Link><Link to='/about'>About</Link></motion.nav><div className='container' style={{flex:1}}><Outlet/></div><footer className='footer'><div className='container'><div>Made with love for Cysic and the ZK family.</div><div style={{marginTop:8,fontSize:13}}>Cysic: <a href='https://app.cysic.xyz/userPortal' target='_blank' rel='noreferrer'>app.cysic.xyz/userPortal</a></div></div></footer></div>)}
