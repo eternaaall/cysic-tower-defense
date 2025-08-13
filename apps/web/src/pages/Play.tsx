@@ -14,8 +14,11 @@ async function hmacSHA256(key:string, msg:string){
 
 export default function Play(){
   const [nick,setNick]=useState<string|null>(localStorage.getItem('nickname'))
-  const ref=useRef<HTMLDivElement>(null); const gameRef=useRef<Game|null>(null)
+  const wrapRef=useRef<HTMLDivElement>(null)
+  const surfaceRef=useRef<HTMLDivElement>(null)
+  const gameRef=useRef<Game|null>(null)
   const runRef=useRef<{run_id:string, nonce:string} | null>(null)
+  const [isFs,setFs]=useState(false)
 
   useEffect(()=>{ if(!nick) return;
     const deviceId=getOrCreateDeviceId()
@@ -24,9 +27,9 @@ export default function Play(){
       body:JSON.stringify({device_id:deviceId,nickname:nick})
     }).then(r=>r.json()).then(async data=>{
       runRef.current = { run_id: data.run_id, nonce: data.nonce }
-      if(!gameRef.current && ref.current){
+      if(!gameRef.current && surfaceRef.current){
         gameRef.current = new Game({
-          type:AUTO, parent:ref.current, width:1024, height:576, backgroundColor:'#0b0b0f',
+          type:AUTO, parent:surfaceRef.current, width:1024, height:576, backgroundColor:'#0b0b0f',
           scale:{ mode:Scale.FIT, autoCenter:Scale.CENTER_BOTH },
           fps:{ target:60, min:30, forceSetTimeOut:false },
           physics:{ default:'arcade', arcade:{ debug:false } },
@@ -46,7 +49,6 @@ export default function Play(){
       }
     }).catch(()=>alert('API not reachable yet.'))
 
-    // визит — best effort
     fetch(`${API_BASE}/api/visit`,{
       method:'POST', headers:{'Content-Type':'application/json'},
       body:JSON.stringify({device_id:deviceId,tz_offset:new Date().getTimezoneOffset()})
@@ -54,14 +56,34 @@ export default function Play(){
 
   },[nick])
 
+  // Fullscreen handlers
+  const toggleFs = async ()=>{
+    const el = wrapRef.current
+    if(!el) return
+    try{
+      if(!document.fullscreenElement){
+        await el.requestFullscreen?.()
+        setFs(true)
+      }else{
+        await document.exitFullscreen?.()
+        setFs(false)
+      }
+    }catch(e){ console.error(e) }
+  }
+
   return (
     <div className="page">
       <div className="hero">
         <motion.div className="badge" initial={{opacity:0,y:-10}} animate={{opacity:1,y:0}}>Cysic Tower Defense</motion.div>
         <h1>Defend the ZK pipeline</h1>
       </div>
+
       {!nick && <NicknameModal onSubmit={setNick}/>}
-      <div ref={ref} className="game-surface"/>
+
+      <div className="game-wrap" ref={wrapRef}>
+        <div ref={surfaceRef} className="game-surface"/>
+        <button className="fullscreen-btn" onClick={toggleFs}>{isFs ? 'Exit Fullscreen' : 'Fullscreen'}</button>
+      </div>
     </div>
   )
 }
