@@ -1,3 +1,43 @@
-import { motion } from 'framer-motion'
-import React,{useState} from 'react'
-export default function NicknameModal({onSubmit}:{onSubmit:(n:string)=>void}){const[nick,setNick]=useState(localStorage.getItem('nickname')||'');const[err,setErr]=useState<string|undefined>();const ok=(s:string)=>/^[a-z0-9_-]{3,16}$/i.test(s);return(<div style={{position:'fixed',inset:0,display:'grid',placeItems:'center',background:'rgba(0,0,0,.5)'}}><motion.div initial={{scale:.9,opacity:0}} animate={{scale:1,opacity:1}} transition={{type:'spring',damping:16}} style={{background:'#11131a',border:'1px solid rgba(255,255,255,.08)',borderRadius:16,padding:20,width:360,maxWidth:'90%'}}><h3 style={{marginTop:0}}>Enter nickname</h3><p style={{marginTop:4,color:'var(--muted)'}}>ASCII letters, numbers, '_' or '-' · 3–16 chars.</p><input value={nick} onChange={e=>setNick(e.target.value)} placeholder='your-nickname' style={{width:'100%',padding:10,borderRadius:12,border:'1px solid rgba(255,255,255,.08)',background:'#0b0b0f',color:'#fff'}}/>{err&&<div style={{color:'#ff6b6b',marginTop:6}}>{err}</div>}<div style={{display:'flex',gap:8,marginTop:12}}><button className='btn' onClick={()=>{if(!ok(nick)){setErr('Invalid nickname');return;}localStorage.setItem('nickname',nick);onSubmit(nick)}}>Continue</button></div></motion.div></div>)}
+import React, { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+
+export default function NicknameModal({ onSubmit }:{ onSubmit:(v:string)=>void }){
+  const [nick,setNick]=useState('')
+
+  const save=()=>{
+    const v=nick.trim()
+    if(!v) return
+    localStorage.setItem('nickname', v)
+    onSubmit(v)
+  }
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        className="modal-backdrop"
+        initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} transition={{duration:.2}}
+      />
+      <motion.div
+        className="modal"
+        initial={{opacity:0, scale:.96, y:10}} animate={{opacity:1, scale:1, y:0}} exit={{opacity:0, y:10}} transition={{type:'spring', stiffness:220, damping:24}}
+      >
+        <div className="modal-title">Welcome, Operator</div>
+        <div className="modal-sub">For the best experience, use your PC. You can also play on your mobile device.</div>
+
+        <label className="modal-label">Enter your nickname</label>
+        <input
+          className="modal-input"
+          placeholder="e.g. eternaaall"
+          value={nick}
+          onChange={e=>setNick(e.target.value)}
+          onKeyDown={e=> e.key==='Enter' && save()}
+          autoFocus
+        />
+
+        <div className="modal-actions">
+          <button className="btn" onClick={save}>Play</button>
+        </div>
+      </motion.div>
+    </AnimatePresence>
+  )
+}

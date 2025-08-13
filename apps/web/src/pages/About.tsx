@@ -1,2 +1,20 @@
 import React from 'react'
-export default function About(){return(<div><h2>About</h2><p>This fan-made web game is inspired by the Cysic ecosystem — built as a quick, smooth tower defense with a deterministic core loop.</p><p><strong>Made with love for Cysic and the ZK family.</strong></p><ul><li>Author: <strong>eternaaall</strong></li><li>GitHub & Discord: <strong>eternaaall</strong></li><li>Twitter: <a href='https://twitter.com/eternaaall_' target='_blank' rel='noreferrer'>@eternaaall_</a></li><li>Scripts: <a href='https://github.com/eternaaall/provercysic' target='_blank' rel='noreferrer'>provercysic</a>, <a href='https://github.com/eternaaall/verifcysic' target='_blank' rel='noreferrer'>verifcysic</a></li><li>Cysic: <a href='https://app.cysic.xyz/userPortal' target='_blank' rel='noreferrer'>app.cysic.xyz/userPortal</a></li></ul></div>)}
+import { motion } from 'framer-motion'
+
+export default function About(){
+  return (
+    <motion.div className="page" initial={{opacity:0}} animate={{opacity:1}}>
+      <h1>About</h1>
+
+      <div className="about-card">
+        <p><strong>Author:</strong> eternaaall — a simple 18-year-old ZK fan from Ukraine.</p>
+        <p><strong>GitHub & Discord:</strong> <a href="https://github.com/eternaaall" target="_blank" rel="noreferrer">eternaaall</a></p>
+        <p><strong>Twitter:</strong> <a href="https://twitter.com/eternaaall_" target="_blank" rel="noreferrer">@eternaaall_</a></p>
+        <p><strong>Scripts for easy Node installation:</strong> <a href="https://github.com/eternaaall/provercysic" target="_blank" rel="noreferrer">Prover</a> / <a href="https://github.com/eternaaall/verifcysic" target="_blank" rel="noreferrer">Verifier</a></p>
+        <p><strong>Cysic:</strong> <a href="https://app.cysic.xyz" target="_blank" rel="noreferrer">app.cysic.xyz</a></p>
+      </div>
+
+      <p className="love">Made with ♥ for Cysic and the ZK family.</p>
+    </motion.div>
+  )
+}
