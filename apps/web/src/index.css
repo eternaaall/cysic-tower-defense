@@ -1,20 +1,19 @@
 @import url("https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;600;800;900&display=swap");
 
-/* ===== Theme ===== */
+/* ===== Design tokens (hi-tech) ===== */
 :root{
   --bg:#080b12;        /* глубокий тёмный */
   --grid:#0c1019;      /* фон-сетка */
-  --panel:#0e1420;     /* панели/карточки */
+  --panel:#0e1420;     /* карточки/панели */
   --panel-2:#121a2b;
-  --ink:#ecf0ff;       /* основной текст */
+  --ink:#ecf0ff;       /* текст */
   --muted:#9aa6bd;     /* вторичный текст */
-  --brand:#6b7cff;     /* фирменный акцент */
+  --brand:#6b7cff;     /* акцент */
   --accent:#8a5cff;    /* второй акцент */
   --border:rgba(255,255,255,.08);
   --glow:0 16px 60px rgba(99,118,255,.18);
 }
 
-/* ===== Base ===== */
 *{ box-sizing:border-box }
 html,body,#root{ height:100% }
 body{
@@ -24,7 +23,7 @@ body{
   -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
 }
 
-/* Фоновая сетка + лёгкий «сканлайн» */
+/* Фоновая сетка + свет */
 body::before{
   content:""; position:fixed; inset:0; z-index:-2;
   background:
@@ -43,7 +42,6 @@ body::after{
 a{ color:#7bd0ff; text-decoration:none }
 a:hover{ opacity:.9 }
 
-/* ===== Layout ===== */
 .shell{ max-width:1160px; margin:0 auto; padding:0 20px }
 .page{ max-width:1160px; margin:0 auto; padding:24px 20px }
 .hero{ text-align:center; padding:20px 0 8px 0 }
@@ -52,7 +50,7 @@ a:hover{ opacity:.9 }
   background:linear-gradient(90deg,#59f 0%, #8a5cff 100%); color:white; font-weight:800; font-size:12px; letter-spacing:.5px;
   box-shadow:0 10px 38px rgba(138,92,255,.28);
 }
-h1{ font-size:42px; margin:12px 0 8px 0; font-weight:900; letter-spacing:.2px; text-transform:none }
+h1{ font-size:42px; margin:12px 0 8px 0; font-weight:900; letter-spacing:.2px }
 
 /* ===== Header / Nav ===== */
 .site-header{
