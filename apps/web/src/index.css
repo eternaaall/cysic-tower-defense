@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;600;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;600;800;900&display=swap");
 :root{
   --bg:#0a0d14;
   --panel:#0f131c;
@@ -30,7 +30,7 @@ a:hover{ opacity:.9 }
   background:linear-gradient(90deg,#59f 0%, #8a5cff 100%); color:white; font-weight:800; font-size:12px; letter-spacing:.5px;
   box-shadow:0 10px 38px rgba(138,92,255,.28);
 }
-h1{ font-size:40px; margin:12px 0 8px 0; font-weight:800; letter-spacing:.2px }
+h1{ font-size:40px; margin:12px 0 8px 0; font-weight:900; letter-spacing:.2px }
 
 .site-header{
   position:sticky; top:0; z-index:20;
@@ -41,7 +41,7 @@ h1{ font-size:40px; margin:12px 0 8px 0; font-weight:800; letter-spacing:.2px }
 }
 .brand{ display:flex; align-items:center; gap:10px }
 .brand-logo{ width:22px; height:22px; border-radius:5px }
-.brand-text{ font-weight:800; font-size:16px; color:var(--ink) }
+.brand-text{ font-weight:900; font-size:16px; color:var(--ink) }
 
 .nav{ display:flex; gap:18px }
 .nav-link{ position:relative; padding:8px 10px; border-radius:10px; color:var(--ink-2); }
@@ -61,7 +61,7 @@ h1{ font-size:40px; margin:12px 0 8px 0; font-weight:800; letter-spacing:.2px }
 .fullscreen-btn{
   position:absolute; right:12px; top:12px;
   padding:8px 12px; border-radius:12px; border:1px solid var(--border);
-  background:linear-gradient(180deg,#202538,#171c2a); color:var(--ink); font-weight:800;
+  background:linear-gradient(180deg,#202538,#171c2a); color:var(--ink); font-weight:900;
   transition:transform .06s ease, box-shadow .2s ease, opacity .2s ease;
 }
 .fullscreen-btn:hover{ box-shadow:0 10px 30px rgba(107,124,255,.25) }
@@ -84,7 +84,7 @@ h1{ font-size:40px; margin:12px 0 8px 0; font-weight:800; letter-spacing:.2px }
   display:block; width:calc(100% - 40px); margin:0 20px 10px; padding:12px 14px;
   background:var(--panel-2); border:1px solid var(--border); color:var(--ink);
   border-radius:12px; outline:none; transition:border-color .2s ease, transform .1s ease;
-  font-weight:700;
+  font-weight:800;
 }
 .modal-input:focus{ border-color:rgba(123,208,255,.5); transform: translateY(-1px) }
 .modal-hint{ padding:6px 20px 0; font-size:13px; color:var(--ink-2) }
