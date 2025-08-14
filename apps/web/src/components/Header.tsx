@@ -8,23 +8,25 @@ export default function Header(){
 
   return (
     <header className="site-header">
-      <Link to="/" className="brand">
-        <img src="/cysic-logo.png" alt="Cysic" className="brand-logo" />
-        <span className="brand-text">Cysic&nbsp;Tower&nbsp;Defense</span>
-      </Link>
+      <div className="shell bar">
+        <Link to="/" className="brand">
+          <img src="/cysic-logo.png" alt="Cysic" className="brand-logo" />
+          <span className="brand-text">Cysic&nbsp;Tower&nbsp;Defense</span>
+        </Link>
 
-      <nav className="nav">
-        {[
-          {to:'/play', label:'Play'},
-          {to:'/leaderboard', label:'Leaderboard'},
-          {to:'/about', label:'About'},
-        ].map(item => (
-          <Link key={item.to} to={item.to} className={`nav-link ${is(item.to) ? 'active' : ''}`}>
-            <motion.span layoutId={`nav-${item.to}`} className="nav-text">{item.label}</motion.span>
-            {is(item.to) && <motion.span layoutId="nav-underline" className="nav-underline" />}
-          </Link>
-        ))}
-      </nav>
+        <nav className="nav">
+          {[
+            {to:'/play', label:'Play'},
+            {to:'/leaderboard', label:'Leaderboard'},
+            {to:'/about', label:'About'},
+          ].map(item => (
+            <Link key={item.to} to={item.to} className={`nav-link ${is(item.to) ? 'active' : ''}`}>
+              <motion.span layoutId={`nav-${item.to}`} className="nav-text">{item.label}</motion.span>
+              {is(item.to) && <motion.span layoutId="nav-underline" className="nav-underline" />}
+            </Link>
+          ))}
+        </nav>
+      </div>
     </header>
   )
 }
