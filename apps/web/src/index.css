@@ -1,72 +1,104 @@
 @import url("https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;600;800;900&display=swap");
+
+/* ===== Theme ===== */
 :root{
-  --bg:#0a0d14;
-  --panel:#0f131c;
-  --panel-2:#111828;
-  --ink:#e9ecf6;
-  --ink-2:#9aa6bd;
-  --brand:#6b7cff;
-  --accent:#8a5cff;
-  --border: rgba(255,255,255,.07);
+  --bg:#080b12;        /* глубокий тёмный */
+  --grid:#0c1019;      /* фон-сетка */
+  --panel:#0e1420;     /* панели/карточки */
+  --panel-2:#121a2b;
+  --ink:#ecf0ff;       /* основной текст */
+  --muted:#9aa6bd;     /* вторичный текст */
+  --brand:#6b7cff;     /* фирменный акцент */
+  --accent:#8a5cff;    /* второй акцент */
+  --border:rgba(255,255,255,.08);
+  --glow:0 16px 60px rgba(99,118,255,.18);
 }
 
+/* ===== Base ===== */
 *{ box-sizing:border-box }
 html,body,#root{ height:100% }
 body{
-  margin:0; background:var(--bg);
-  color:var(--ink);
+  margin:0; color:var(--ink); background:var(--bg);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
   font-weight:600; letter-spacing:.1px;
   -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
 }
 
+/* Фоновая сетка + лёгкий «сканлайн» */
+body::before{
+  content:""; position:fixed; inset:0; z-index:-2;
+  background:
+    linear-gradient(transparent 31px, rgba(255,255,255,.02) 32px) repeat,
+    linear-gradient(90deg, transparent 31px, rgba(255,255,255,.02) 32px) repeat,
+    radial-gradient(1200px 600px at 70% -10%, rgba(139,92,255,.08), transparent 50%);
+  background-size:32px 32px, 32px 32px, auto;
+  background-color:var(--grid);
+}
+body::after{
+  content:""; position:fixed; inset:0; z-index:-1;
+  background: linear-gradient(180deg, rgba(12,16,25,0) 0%, rgba(12,16,25,.6) 60%, rgba(12,16,25,.9) 100%);
+  pointer-events:none;
+}
+
 a{ color:#7bd0ff; text-decoration:none }
 a:hover{ opacity:.9 }
 
-.page{ max-width:1120px; margin:0 auto; padding:24px 20px }
-.hero{ text-align:center; padding:18px 0 8px 0 }
+/* ===== Layout ===== */
+.shell{ max-width:1160px; margin:0 auto; padding:0 20px }
+.page{ max-width:1160px; margin:0 auto; padding:24px 20px }
+.hero{ text-align:center; padding:20px 0 8px 0 }
 .badge{
   display:inline-block; padding:6px 12px; border-radius:999px;
   background:linear-gradient(90deg,#59f 0%, #8a5cff 100%); color:white; font-weight:800; font-size:12px; letter-spacing:.5px;
   box-shadow:0 10px 38px rgba(138,92,255,.28);
 }
-h1{ font-size:40px; margin:12px 0 8px 0; font-weight:900; letter-spacing:.2px }
+h1{ font-size:42px; margin:12px 0 8px 0; font-weight:900; letter-spacing:.2px; text-transform:none }
 
+/* ===== Header / Nav ===== */
 .site-header{
   position:sticky; top:0; z-index:20;
   backdrop-filter:saturate(1.2) blur(6px);
-  background:linear-gradient(180deg, rgba(15,19,28,.92), rgba(15,19,28,.65) 60%, transparent 100%);
+  background:linear-gradient(180deg, rgba(14,20,32,.9), rgba(14,20,32,.6) 60%, transparent 100%);
   border-bottom:1px solid var(--border);
-  display:flex; align-items:center; justify-content:space-between; gap:16px; padding:10px 18px;
+}
+.site-header .bar{
+  display:flex; align-items:center; justify-content:space-between; gap:16px; padding:12px 0;
 }
 .brand{ display:flex; align-items:center; gap:10px }
-.brand-logo{ width:22px; height:22px; border-radius:5px }
+.brand-logo{ width:22px; height:22px; border-radius:6px }
 .brand-text{ font-weight:900; font-size:16px; color:var(--ink) }
 
-.nav{ display:flex; gap:18px }
-.nav-link{ position:relative; padding:8px 10px; border-radius:10px; color:var(--ink-2); }
-.nav-text{ font-family: Anton, Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif; letter-spacing:.3px; font-size:16px }
+.nav{ display:flex; gap:22px }
+.nav-link{ position:relative; padding:8px 2px; border-radius:10px; color:var(--muted); }
+.nav-text{
+  font-family: Anton, Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+  font-weight:400; font-size:18px; letter-spacing:.4px; text-transform:uppercase;
+}
 .nav-link.active{ color:var(--ink) }
 .nav-underline{
-  position:absolute; left:8px; right:8px; bottom:4px; height:2px; border-radius:2px; background:var(--brand);
+  position:absolute; left:0; right:0; bottom:2px; height:2px; border-radius:2px; background:var(--brand);
+  box-shadow:0 6px 18px rgba(107,124,255,.5);
 }
 
+/* ===== Game Surface & Buttons ===== */
 .game-wrap{ position:relative }
 .game-surface{
   width:100%; aspect-ratio:16/9; border-radius:16px; overflow:hidden;
   border:1px solid var(--border); background:#0b0b0f;
-  box-shadow: 0 16px 60px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.02);
+  box-shadow: var(--glow), inset 0 0 0 1px rgba(255,255,255,.02);
   margin:16px auto 24px auto;
 }
 .fullscreen-btn{
-  position:absolute; right:12px; top:12px;
-  padding:8px 12px; border-radius:12px; border:1px solid var(--border);
-  background:linear-gradient(180deg,#202538,#171c2a); color:var(--ink); font-weight:900;
+  position:absolute; right:12px; top:12px; cursor:pointer;
+  padding:10px 14px; border-radius:12px; border:1px solid var(--border);
+  background:linear-gradient(180deg,#202538,#171c2a); color:var(--ink);
+  font-weight:900; letter-spacing:.2px;
   transition:transform .06s ease, box-shadow .2s ease, opacity .2s ease;
 }
-.fullscreen-btn:hover{ box-shadow:0 10px 30px rgba(107,124,255,.25) }
+.fullscreen-btn:hover{ box-shadow:0 14px 34px rgba(107,124,255,.28) }
 .fullscreen-btn:active{ transform:translateY(1px) }
 
+/* ===== Modal (nickname) ===== */
 .modal-backdrop{
   position:fixed; inset:0; background:rgba(6,8,12,.58);
   backdrop-filter: blur(5px);
@@ -78,8 +110,12 @@ h1{ font-size:40px; margin:12px 0 8px 0; font-weight:900; letter-spacing:.2px }
   background:var(--panel); border:1px solid var(--border); border-radius:16px; width:min(560px, 92vw);
   box-shadow: 0 30px 100px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.03) inset;
 }
-.modal-title{ padding:20px 20px 2px; font-size:22px; font-weight:900; letter-spacing:.2px }
-.modal-label{ padding:14px 20px 6px; display:block; color:var(--ink-2); font-weight:700 }
+.modal-title{
+  padding:20px 20px 2px; font-size:24px;
+  font-family: Anton, Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+  letter-spacing:.6px; text-transform:uppercase;
+}
+.modal-label{ padding:14px 20px 6px; display:block; color:var(--muted); font-weight:800 }
 .modal-input{
   display:block; width:calc(100% - 40px); margin:0 20px 10px; padding:12px 14px;
   background:var(--panel-2); border:1px solid var(--border); color:var(--ink);
@@ -87,17 +123,24 @@ h1{ font-size:40px; margin:12px 0 8px 0; font-weight:900; letter-spacing:.2px }
   font-weight:800;
 }
 .modal-input:focus{ border-color:rgba(123,208,255,.5); transform: translateY(-1px) }
-.modal-hint{ padding:6px 20px 0; font-size:13px; color:var(--ink-2) }
+.modal-hint{ padding:8px 20px 0; font-size:13px; color:var(--muted) }
 .modal-actions{ display:flex; justify-content:flex-end; gap:8px; padding:16px 20px 18px }
 .btn{
   padding:10px 14px; border-radius:12px; border:1px solid var(--border);
-  background:linear-gradient(180deg,#202538,#171c2a); color:var(--ink); font-weight:900;
+  background:linear-gradient(180deg,#202538,#171c2a); color:var(--ink);
+  font-weight:900; letter-spacing:.2px;
   transition:transform .06s ease, box-shadow .2s ease, opacity .2s ease;
 }
-.btn:hover{ box-shadow:0 10px 30px rgba(107,124,255,.25) }
+.btn:hover{ box-shadow:0 12px 32px rgba(107,124,255,.25) }
 .btn:active{ transform:translateY(1px) }
 
-.about-card{
+/* ===== Cards / About / Leaderboard ===== */
+.card, .about-card{
   background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:16px 18px; line-height:1.6;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.02);
 }
-.love{ margin-top:16px; color:var(--ink-2) }
+.section-title{
+  font-family: Anton, Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+  text-transform:uppercase; letter-spacing:.5px; font-size:20px; margin:0 0 8px 0;
+}
+.love{ margin-top:16px; color:var(--muted) }
