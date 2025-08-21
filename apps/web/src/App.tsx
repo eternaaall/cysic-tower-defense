@@ -1,10 +1,14 @@
 import React from 'react'
-import { Outlet, Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, Routes, Route, Navigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 
-export default function App() {
+import Play from './pages/Play'
+import Leaderboard from './pages/Leaderboard'
+import About from './pages/About'
+
+export default function App(){
   const { pathname } = useLocation()
-  const is = (p: string) => pathname === p
+  const is = (p:string)=> pathname===p
 
   const items = [
     { to: '/play', label: 'Play' },
@@ -13,7 +17,7 @@ export default function App() {
   ]
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100%' }}>
+    <div style={{display:'flex', flexDirection:'column', minHeight:'100%'}}>
       <header className="site-header">
         <div className="shell bar">
           <Link to="/play" className="brand">
@@ -22,7 +26,7 @@ export default function App() {
           </Link>
 
           <nav className="nav">
-            {items.map((it) => (
+            {items.map(it => (
               <Link key={it.to} to={it.to} className={`nav-link ${is(it.to) ? 'active' : ''}`}>
                 <span className="nav-text">{it.label}</span>
                 {is(it.to) && <motion.span layoutId="nav-underline" className="nav-underline" />}
@@ -32,9 +36,14 @@ export default function App() {
         </div>
       </header>
 
-      {/* Контент страниц */}
       <div className="page">
-        <Outlet />
+        <Routes>
+          <Route path="/" element={<Navigate to="/play" replace />} />
+          <Route path="/play" element={<Play />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
+          <Route path="/about" element={<About />} />
+          <Route path="*" element={<Navigate to="/play" replace />} />
+        </Routes>
       </div>
     </div>
   )
