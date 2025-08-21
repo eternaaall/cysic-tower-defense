@@ -78,7 +78,7 @@ export default function Play(){
         <h1>Defend the ZK pipeline</h1>
       </div>
 
-      {!nick && <NicknameModal onSubmit={setNick}/>}
+      {!nick && <NicknameModal onSubmit={(v)=>setNick(v)} />}
 
       <div className="game-wrap" ref={wrapRef}>
         <div ref={surfaceRef} className="game-surface"/>
