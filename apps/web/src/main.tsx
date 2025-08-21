@@ -2,7 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App'
-import './index.css'   // важно: подключаем этот файл стилей
+import './index.css'   // твой актуальный глобальный стиль
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
