@@ -1,17 +1,16 @@
-@import url("https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;600;800;900&display=swap");
+/* Minimal hi-tech theme: very dark neutrals, teal accent, flat panels */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap");
 
-/* ===== Design tokens (hi-tech) ===== */
 :root{
-  --bg:#080b12;        /* глубокий тёмный */
-  --grid:#0c1019;      /* фон-сетка */
-  --panel:#0e1420;     /* карточки/панели */
-  --panel-2:#121a2b;
-  --ink:#ecf0ff;       /* текст */
-  --muted:#9aa6bd;     /* вторичный текст */
-  --brand:#6b7cff;     /* акцент */
-  --accent:#8a5cff;    /* второй акцент */
-  --border:rgba(255,255,255,.08);
-  --glow:0 16px 60px rgba(99,118,255,.18);
+  --bg:#0A0A0B;          /* page */
+  --grid:#0D0D0E;        /* subtle grid */
+  --surface:#111113;     /* cards */
+  --surface-2:#151517;   /* inputs/buttons */
+  --ink:#EEEFF3;         /* text */
+  --muted:#A0A1A6;       /* secondary */
+  --brand:#5EEAD4;       /* teal accent */
+  --border:rgba(255,255,255,.06);
+  --ring:rgba(94,234,212,.25); /* focus ring */
 }
 
 *{ box-sizing:border-box }
@@ -23,122 +22,110 @@ body{
   -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
 }
 
-/* Фоновая сетка + свет */
+/* лёгкая сетка + мягкий подсвет */
 body::before{
   content:""; position:fixed; inset:0; z-index:-2;
   background:
     linear-gradient(transparent 31px, rgba(255,255,255,.02) 32px) repeat,
-    linear-gradient(90deg, transparent 31px, rgba(255,255,255,.02) 32px) repeat,
-    radial-gradient(1200px 600px at 70% -10%, rgba(139,92,255,.08), transparent 50%);
-  background-size:32px 32px, 32px 32px, auto;
+    linear-gradient(90deg, transparent 31px, rgba(255,255,255,.02) 32px) repeat;
+  background-size:32px 32px, 32px 32px;
   background-color:var(--grid);
 }
 body::after{
   content:""; position:fixed; inset:0; z-index:-1;
-  background: linear-gradient(180deg, rgba(12,16,25,0) 0%, rgba(12,16,25,.6) 60%, rgba(12,16,25,.9) 100%);
+  background: radial-gradient(900px 500px at 80% -10%, rgba(94,234,212,.06), transparent 50%);
   pointer-events:none;
 }
 
-a{ color:#7bd0ff; text-decoration:none }
-a:hover{ opacity:.9 }
+a{ color:var(--ink); text-decoration:none; opacity:.9 }
+a:hover{ opacity:1 }
 
+/* layout */
 .shell{ max-width:1160px; margin:0 auto; padding:0 20px }
 .page{ max-width:1160px; margin:0 auto; padding:24px 20px }
-.hero{ text-align:center; padding:20px 0 8px 0 }
-.badge{
-  display:inline-block; padding:6px 12px; border-radius:999px;
-  background:linear-gradient(90deg,#59f 0%, #8a5cff 100%); color:white; font-weight:800; font-size:12px; letter-spacing:.5px;
-  box-shadow:0 10px 38px rgba(138,92,255,.28);
-}
-h1{ font-size:42px; margin:12px 0 8px 0; font-weight:900; letter-spacing:.2px }
+.hero{ text-align:center; padding:18px 0 6px 0 }
+h1{ font-size:40px; margin:12px 0 6px 0; font-weight:900; letter-spacing:.2px }
 
-/* ===== Header / Nav ===== */
+/* заглушка-бейдж (если используется) */
+.badge{
+  display:inline-flex; gap:8px; align-items:center;
+  padding:6px 12px; border-radius:999px;
+  border:1px solid var(--border); color:var(--ink); font-weight:800; font-size:12px; letter-spacing:.4px;
+}
+.badge::before{ content:""; width:6px; height:6px; border-radius:999px; background:var(--brand); }
+
+/* header */
 .site-header{
   position:sticky; top:0; z-index:20;
-  backdrop-filter:saturate(1.2) blur(6px);
-  background:linear-gradient(180deg, rgba(14,20,32,.9), rgba(14,20,32,.6) 60%, transparent 100%);
+  -webkit-backdrop-filter: blur(6px) saturate(1.1); backdrop-filter: blur(6px) saturate(1.1);
+  background:rgba(12,12,13,.7);
   border-bottom:1px solid var(--border);
 }
 .site-header .bar{
-  display:flex; align-items:center; justify-content:space-between; gap:16px; padding:12px 0;
+  display:flex; align-items:center; justify-content:space-between; gap:16px; padding:10px 0;
 }
 .brand{ display:flex; align-items:center; gap:10px }
 .brand-logo{ width:22px; height:22px; border-radius:6px }
 .brand-text{ font-weight:900; font-size:16px; color:var(--ink) }
 
+/* nav — жирно, но минималистично */
 .nav{ display:flex; gap:22px }
-.nav-link{ position:relative; padding:8px 2px; border-radius:10px; color:var(--muted); }
-.nav-text{
-  font-family: Anton, Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
-  font-weight:400; font-size:18px; letter-spacing:.4px; text-transform:uppercase;
-}
+.nav-link{ position:relative; padding:8px 0; color:var(--muted) }
+.nav-text{ font-weight:900; letter-spacing:.3px; font-size:17px }
 .nav-link.active{ color:var(--ink) }
 .nav-underline{
   position:absolute; left:0; right:0; bottom:2px; height:2px; border-radius:2px; background:var(--brand);
-  box-shadow:0 6px 18px rgba(107,124,255,.5);
+  box-shadow:0 0 0 2px rgba(94,234,212,.08);
 }
 
-/* ===== Game Surface & Buttons ===== */
+/* game surface */
 .game-wrap{ position:relative }
 .game-surface{
   width:100%; aspect-ratio:16/9; border-radius:16px; overflow:hidden;
-  border:1px solid var(--border); background:#0b0b0f;
-  box-shadow: var(--glow), inset 0 0 0 1px rgba(255,255,255,.02);
+  border:1px solid var(--border); background:#0B0B0C;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.02);
   margin:16px auto 24px auto;
 }
-.fullscreen-btn{
-  position:absolute; right:12px; top:12px; cursor:pointer;
-  padding:10px 14px; border-radius:12px; border:1px solid var(--border);
-  background:linear-gradient(180deg,#202538,#171c2a); color:var(--ink);
-  font-weight:900; letter-spacing:.2px;
-  transition:transform .06s ease, box-shadow .2s ease, opacity .2s ease;
-}
-.fullscreen-btn:hover{ box-shadow:0 14px 34px rgba(107,124,255,.28) }
-.fullscreen-btn:active{ transform:translateY(1px) }
 
-/* ===== Modal (nickname) ===== */
+/* buttons (в т.ч. .fullscreen-btn и .btn) */
+.fullscreen-btn, .btn{
+  cursor:pointer; user-select:none;
+  padding:10px 14px; border-radius:12px; border:1px solid var(--border);
+  background:var(--surface-2); color:var(--ink);
+  font-weight:900; letter-spacing:.2px;
+  transition: border-color .15s ease, transform .06s ease, box-shadow .15s ease, background .15s ease;
+}
+.fullscreen-btn:hover, .btn:hover{ border-color:rgba(255,255,255,.14) }
+.fullscreen-btn:active, .btn:active{ transform:translateY(1px) }
+.fullscreen-btn:focus-visible, .btn:focus-visible{ outline:none; box-shadow:0 0 0 6px var(--ring) }
+.fullscreen-btn{ position:absolute; right:12px; top:12px }
+
+/* cards / about / leaderboard */
+.card, .about-card{
+  background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:16px 18px; line-height:1.6;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.015);
+}
+.section-title{ font-weight:900; letter-spacing:.4px; font-size:18px; margin:0 0 8px 0 }
+.love{ margin-top:16px; color:var(--muted) }
+
+/* modal (nickname) */
 .modal-backdrop{
-  position:fixed; inset:0; background:rgba(6,8,12,.58);
-  backdrop-filter: blur(5px);
+  position:fixed; inset:0; background:rgba(10,10,11,.6);
+  -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px);
 }
-.modal{
-  position:fixed; inset:0; display:flex; align-items:center; justify-content:center; padding:24px;
-}
+.modal{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center; padding:24px }
 .modal-card{
-  background:var(--panel); border:1px solid var(--border); border-radius:16px; width:min(560px, 92vw);
-  box-shadow: 0 30px 100px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.03) inset;
+  background:var(--surface); border:1px solid var(--border); border-radius:16px; width:min(560px, 92vw);
+  box-shadow: 0 30px 80px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.02);
 }
-.modal-title{
-  padding:20px 20px 2px; font-size:24px;
-  font-family: Anton, Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
-  letter-spacing:.6px; text-transform:uppercase;
-}
+.modal-title{ padding:20px 20px 2px; font-size:22px; font-weight:900; letter-spacing:.2px }
 .modal-label{ padding:14px 20px 6px; display:block; color:var(--muted); font-weight:800 }
 .modal-input{
   display:block; width:calc(100% - 40px); margin:0 20px 10px; padding:12px 14px;
-  background:var(--panel-2); border:1px solid var(--border); color:var(--ink);
+  background:var(--surface-2); border:1px solid var(--border); color:var(--ink);
   border-radius:12px; outline:none; transition:border-color .2s ease, transform .1s ease;
   font-weight:800;
 }
-.modal-input:focus{ border-color:rgba(123,208,255,.5); transform: translateY(-1px) }
+.modal-input:focus{ border-color:rgba(255,255,255,.16); box-shadow:0 0 0 6px var(--ring); transform: translateY(-1px) }
 .modal-hint{ padding:8px 20px 0; font-size:13px; color:var(--muted) }
 .modal-actions{ display:flex; justify-content:flex-end; gap:8px; padding:16px 20px 18px }
-.btn{
-  padding:10px 14px; border-radius:12px; border:1px solid var(--border);
-  background:linear-gradient(180deg,#202538,#171c2a); color:var(--ink);
-  font-weight:900; letter-spacing:.2px;
-  transition:transform .06s ease, box-shadow .2s ease, opacity .2s ease;
-}
-.btn:hover{ box-shadow:0 12px 32px rgba(107,124,255,.25) }
-.btn:active{ transform:translateY(1px) }
-
-/* ===== Cards / About / Leaderboard ===== */
-.card, .about-card{
-  background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:16px 18px; line-height:1.6;
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,.02);
-}
-.section-title{
-  font-family: Anton, Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
-  text-transform:uppercase; letter-spacing:.5px; font-size:20px; margin:0 0 8px 0;
-}
-.love{ margin-top:16px; color:var(--muted) }
