@@ -33,7 +33,6 @@ export default function Play() {
   const gameRef = useRef<Game | null>(null)
   const runRef = useRef<{ run_id: string; nonce: string } | null>(null)
 
-  // Start visit + run once nickname is set
   useEffect(() => {
     if (!nick) return
 
@@ -46,7 +45,7 @@ export default function Play() {
       body: JSON.stringify({ device_id: deviceId, tz_offset: new Date().getTimezoneOffset() }),
     }).catch(() => {})
 
-    // start run and boot Phaser
+    // start run + boot Phaser
     fetch(`${API_BASE}/api/run/start`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -66,6 +65,8 @@ export default function Play() {
             scale: { mode: Scale.FIT, autoCenter: Scale.CENTER_BOTH },
             fps: { target: 120, min: 30, forceSetTimeOut: false },
             physics: { default: 'arcade', arcade: { debug: false } },
+            pixelArt: true,
+            roundPixels: true,
             scene: [new MainScene(data.seed, data.run_id, data.season, data.nonce)],
           })
 
@@ -83,7 +84,7 @@ export default function Play() {
                     score,
                     wave,
                     duration_ms: durationMs,
-                    build_hash: 'web-mvp-0.1',
+                    build_hash: 'web-iter1',
                     proof,
                   }),
                 })
@@ -98,7 +99,6 @@ export default function Play() {
         alert('API not reachable yet.')
       })
 
-    // Cleanup on unmount
     return () => {
       if (gameRef.current) {
         gameRef.current.destroy(true)
@@ -136,7 +136,7 @@ export default function Play() {
       {!nick && <NicknameModal onSubmit={(v) => setNick(v)} />}
 
       <div className="game-wrap shell" ref={wrapRef}>
-        {/* HUD overlay with nickname (sits above canvas; non-interactive) */}
+        {/* HUD overlay with nickname */}
         {nick && <div className="hud-overlay">Nick: {nick}</div>}
 
         <div ref={surfaceRef} className="game-surface" />
