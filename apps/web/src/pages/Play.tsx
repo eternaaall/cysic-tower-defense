@@ -57,21 +57,18 @@ export default function Play() {
         runRef.current = { run_id: data.run_id, nonce: data.nonce }
 
         if (!gameRef.current && surfaceRef.current) {
-          // Create Phaser game
           gameRef.current = new Game({
             type: AUTO,
             parent: surfaceRef.current,
             width: 1024,
             height: 576,
             backgroundColor: '#0b0b0f',
-            // High refresh friendly: use rAF (no forced setTimeout), fit + center
             scale: { mode: Scale.FIT, autoCenter: Scale.CENTER_BOTH },
             fps: { target: 120, min: 30, forceSetTimeOut: false },
             physics: { default: 'arcade', arcade: { debug: false } },
             scene: [new MainScene(data.seed, data.run_id, data.season, data.nonce)],
           })
 
-          // When scene finishes a run, submit score
           gameRef.current.events.on(
             'run_finished',
             async ({ score, wave, durationMs }: { score: number; wave: number; durationMs: number }) => {
@@ -136,17 +133,22 @@ export default function Play() {
         <h1>Defend the ZK pipeline</h1>
       </div>
 
-      {/* Nickname modal (only when no nickname yet) */}
       {!nick && <NicknameModal onSubmit={(v) => setNick(v)} />}
 
       <div className="game-wrap shell" ref={wrapRef}>
+        {/* HUD overlay with nickname (sits above canvas; non-interactive) */}
+        {nick && <div className="hud-overlay">Nick: {nick}</div>}
+
         <div ref={surfaceRef} className="game-surface" />
-        {/* Show fullscreen button only after nickname is set (modal closed) */}
-        {nick && (
-          <button className="fullscreen-btn" onClick={toggleFs}>
-            {isFs ? 'Exit Fullscreen' : 'Fullscreen'}
-          </button>
-        )}
+
+        {/* actions row under the game */}
+        <div className="game-actions">
+          {nick && (
+            <button className="fullscreen-btn" onClick={toggleFs}>
+              {isFs ? 'Exit Fullscreen' : 'Fullscreen'}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   )
