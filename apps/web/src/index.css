@@ -87,7 +87,7 @@ h1{ font-size:40px; margin:12px 0 6px 0; font-weight:900; letter-spacing:.2px }
   margin:16px auto 24px auto;
 }
 
-/* buttons (в т.ч. .fullscreen-btn и .btn) */
+/* кнопка Fullscreen — выше канваса, но ниже модалки */
 .fullscreen-btn, .btn{
   cursor:pointer; user-select:none;
   padding:10px 14px; border-radius:12px; border:1px solid var(--border);
@@ -95,10 +95,10 @@ h1{ font-size:40px; margin:12px 0 6px 0; font-weight:900; letter-spacing:.2px }
   font-weight:900; letter-spacing:.2px;
   transition: border-color .15s ease, transform .06s ease, box-shadow .15s ease, background .15s ease;
 }
+.fullscreen-btn{ position:absolute; right:12px; top:12px; z-index:2; }
 .fullscreen-btn:hover, .btn:hover{ border-color:rgba(255,255,255,.14) }
 .fullscreen-btn:active, .btn:active{ transform:translateY(1px) }
 .fullscreen-btn:focus-visible, .btn:focus-visible{ outline:none; box-shadow:0 0 0 6px var(--ring) }
-.fullscreen-btn{ position:absolute; right:12px; top:12px }
 
 /* cards / about / leaderboard */
 .card, .about-card{
@@ -108,12 +108,28 @@ h1{ font-size:40px; margin:12px 0 6px 0; font-weight:900; letter-spacing:.2px }
 .section-title{ font-weight:900; letter-spacing:.4px; font-size:18px; margin:0 0 8px 0 }
 .love{ margin-top:16px; color:var(--muted) }
 
-/* modal (nickname) */
+/* ссылки в About подчёркнуты, чтобы визуально читалось как ссылка */
+.about-card a{
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* таблица лидерборда */
+.lb-table{ width:100%; border-collapse:collapse; }
+.lb-table th, .lb-table td{ padding:10px 12px; border-bottom:1px solid var(--border); text-align:left }
+.lb-table th{ color:var(--muted); font-weight:800 }
+.lb-table tr:hover{ background: rgba(255,255,255,.02) }
+
+/* --- модалка всегда поверх всего --- */
 .modal-backdrop{
   position:fixed; inset:0; background:rgba(10,10,11,.6);
   -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px);
+  z-index: 9998;
 }
-.modal{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center; padding:24px }
+.modal{
+  position:fixed; inset:0; display:flex; align-items:center; justify-content:center; padding:24px;
+  z-index: 9999;
+}
 .modal-card{
   background:var(--surface); border:1px solid var(--border); border-radius:16px; width:min(560px, 92vw);
   box-shadow: 0 30px 80px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.02);
