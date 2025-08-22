@@ -1,6 +1,6 @@
 import Phaser from 'phaser'
 
-// ---- Seeded RNG (Mulberry32) ----
+// -------- Seeded RNG (Mulberry32) ----------
 function mulberry32(seed: number) {
   let t = seed >>> 0
   return function (): number {
@@ -15,13 +15,13 @@ type EnemyKind = 'light' | 'batch'
 type EnemyGO = Phaser.Types.Physics.Arcade.SpriteWithDynamicBody & {
   hp: number
   speed: number
-  pathIdx: number   // current waypoint index
+  pathIdx: number
 }
 
 type Tower = {
   x: number; y: number
   fireCooldown: number
-  range: number // tiles
+  range: number
   energyCost: number
   dps: number
   kind: 'eth'
@@ -33,36 +33,38 @@ export default class MainScene extends Phaser.Scene {
   season: number
   nonce: string
 
-  tile = 34 // ~+6% scale up vs 32px
+  // grid
+  tile = 34         // ~6% больше
   gridW = 32
   gridH = 18
   path: Phaser.Math.Vector2[] = []
 
+  // groups
   enemies!: Phaser.Physics.Arcade.Group
   projectiles!: Phaser.Physics.Arcade.Group
   towers: Tower[] = []
 
-  // resources / meta
+  // meta
   score = 0
   wave = 1
   base = 20
   runStart = 0
   runLimitMs = 4 * 60 * 1000
 
-  // global resources (slower fill)
-  vramMax = 20
-  rpcPerSec = 6          // slower global fire-rate
-  rpcBucket = 0          // refills once per second up to rpcPerSec
+  // resources (строго и предсказуемо)
+  vramMax = 20            // сколько снарядов может одновременно лететь
+  rpcPerSec = 6           // бак RPC пополняется до этого значения каждый 1с
+  rpcBucket = 0
   energyMax = 100
   energy = 100
-  energyRegen = 10       // per second
-  credits = 150
+  energyRegen = 10        // +10 за секунду
 
   // wave pacing
   spawning = false
-  spawnDoneAt = 0
+  waveEndsAt = 0          // когда заканчивается окно спавна волны
 
   // UI
+  nickText!: Phaser.GameObjects.Text
   hudText!: Phaser.GameObjects.Text
   timerText!: Phaser.GameObjects.Text
 
@@ -75,146 +77,175 @@ export default class MainScene extends Phaser.Scene {
   }
 
   preload() {
-    // generate tiny pixel sprites at runtime
+    // минималистичные пиксельные спрайты
     const g = this.add.graphics()
-    g.clear().fillStyle(0x66e7ff).fillRect(0, 0, 10, 10) // light enemy
-    g.generateTexture('e_light', 10, 10)
-    g.clear().fillStyle(0x9d7bff).fillRect(0, 0, 12, 12) // batch enemy
-    g.generateTexture('e_batch', 12, 12)
-    g.clear().fillStyle(0xffffff).fillRect(0, 0, 3, 3) // projectile
-    g.generateTexture('proj', 3, 3)
-    g.clear().fillStyle(0x5eead4).fillRect(0, 0, 12, 12) // tower
-    g.generateTexture('tower', 12, 12)
+    g.clear().fillStyle(0x66e7ff).fillRect(0, 0, 10, 10); g.generateTexture('e_light', 10, 10)
+    g.clear().fillStyle(0x9d7bff).fillRect(0, 0, 12, 12); g.generateTexture('e_batch', 12, 12)
+    g.clear().fillStyle(0xffffff).fillRect(0, 0, 3, 3);   g.generateTexture('proj', 3, 3)
+    g.clear().fillStyle(0x5eead4).fillRect(0, 0, 12, 12); g.generateTexture('tower', 12, 12)
     g.destroy()
   }
 
   create() {
     this.cameras.main.setBackgroundColor('#0b0b0f')
 
-    // calculate grid from canvas size and tile
-    const W = this.scale.width
-    const H = this.scale.height
-    this.gridW = Math.floor(W / this.tile)
-    this.gridH = Math.floor(H / this.tile)
+    // вычислим текущую сетку из размеров канваса
+    this.gridW = Math.floor(this.scale.width / this.tile)
+    this.gridH = Math.floor(this.scale.height / this.tile)
 
-    // path
+    // путь
     this.path = this.makePath(this.seed)
-    this.drawPath()
+    this.drawPathPixels()
 
-    // groups
+    // группы
     this.enemies = this.physics.add.group()
     this.projectiles = this.physics.add.group()
     this.physics.add.overlap(this.projectiles, this.enemies, (p, e) => this.hitEnemy(p as any, e as any))
 
-    // HUD (bolder)
-    this.hudText = this.add.text(10, 10, '', {
-      fontFamily: 'Inter, monospace', fontSize: '16px', color: '#ecf0ff', fontStyle: 'bold'
+    // HUD
+    const W = this.scale.width
+    this.nickText = this.add.text(10, 8, `Nick: ${(localStorage.getItem('nickname') || 'anon')}`, {
+      fontFamily: 'Inter, monospace', fontSize: '20px', fontStyle: 'bold', color: '#ecf0ff'
     })
-    this.timerText = this.add.text(W - 40, 10, '4:00', {
-      fontFamily: 'Inter, monospace', fontSize: '16px', color: '#ecf0ff', fontStyle: 'bold'
+    this.hudText = this.add.text(10, 36, '', {
+      fontFamily: 'Inter, monospace', fontSize: '16px', fontStyle: 'bold', color: '#ecf0ff'
+    })
+    this.timerText = this.add.text(W - 40, 10, '0:00', {
+      fontFamily: 'Inter, monospace', fontSize: '16px', fontStyle: 'bold', color: '#ecf0ff'
     }).setOrigin(1, 0)
 
-    // placing towers by click on empty non-path tile
+    // установка башни по клику
     this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
-      if (this.credits < 50) return
       const gx = Math.floor(p.x / this.tile)
       const gy = Math.floor(p.y / this.tile)
       if (!this.inGrid(gx, gy) || this.isPath(gx, gy) || this.isOccupied(gx, gy)) return
-      this.towers.push({ x: gx, y: gy, fireCooldown: 0, range: 4, energyCost: 1, dps: 12, kind: 'eth' })
-      this.credits -= 50
+      if (this.energy < 5) return // небольшая защита от спама в самом начале
+      this.towers.push({ x: gx, y: gy, fireCooldown: 0, range: 4, energyCost: 3, dps: 12, kind: 'eth' })
       const px = gx * this.tile + this.tile / 2
       const py = gy * this.tile + this.tile / 2
       this.add.image(px, py, 'tower').setOrigin(0.5)
     })
 
-    // timers: once/sec resources
+    // тик ресурсов — ровно раз в секунду
     this.runStart = this.time.now
     this.time.addEvent({
       delay: 1000, loop: true, callback: () => {
         this.energy = Math.min(this.energyMax, this.energy + this.energyRegen)
-        this.rpcBucket = Math.min(this.rpcPerSec, this.rpcBucket + this.rpcPerSec)
+        this.rpcBucket = this.rpcPerSec         // баче наполняется мгновенно раз в 1с
       }
     })
 
-    // first wave
+    // первая волна
     this.startWave()
   }
 
-  // ---- Procedural path: meander across most of the arena ----
+  // ---------- путь: без самопересечений + минимальная длина отрезка ----------
   makePath(seed: number) {
     const rnd = mulberry32(seed >>> 0)
+    const visited = Array.from({ length: this.gridH }, () => Array(this.gridW).fill(false))
     const pts: Phaser.Math.Vector2[] = []
+
     let x = 0
-    let y = Math.floor(this.gridH * (0.2 + rnd() * 0.6)) // start somewhere 20%..80% height
+    let y = Math.floor(this.gridH * (0.2 + rnd() * 0.6))
+    visited[y][x] = true
     pts.push(new Phaser.Math.Vector2(x, y))
 
-    // choose vertical "targets" to encourage big vertical moves
-    let targetY = Math.floor(this.gridH * (0.2 + rnd() * 0.6))
-    while (x < this.gridW - 1) {
-      // bias to the right, but also try to approach targetY
-      const moveRight = rnd() < 0.65
-      if (moveRight) x += 1
-      else {
-        if (y < targetY) y += 1
-        else if (y > targetY) y -= 1
-        else y += (rnd() < 0.5 ? 1 : -1)
-      }
-      // clamp
-      if (y < 1) y = 1
-      if (y > this.gridH - 2) y = this.gridH - 2
+    let dir: 'R' | 'U' | 'D' = 'R'
+    let straight = 0
+    const minStraight = 2          // минимум 2 клетки между поворотами
+    const maxSteps = this.gridW * this.gridH * 2
 
+    for (let steps = 0; steps < maxSteps && x < this.gridW - 1; steps++) {
+      // список потенциальных направлений: вправо приоритетно (x не уменьшаем)
+      const options: Array<{ dx: number, dy: number, tag: 'R' | 'U' | 'D', w: number }> = [
+        { dx: 1, dy: 0, tag: 'R', w: 0.55 },
+        { dx: 0, dy: -1, tag: 'U', w: 0.225 },
+        { dx: 0, dy: 1, tag: 'D', w: 0.225 },
+      ]
+      // запрещаем поворот, если не выдержали прямой участок
+      const filtered = options.filter(o => {
+        if ((o.tag === 'U' || o.tag === 'D') && straight < minStraight) return false
+        return true
+      })
+
+      let chosen: typeof options[number] | null = null
+      for (let tries = 0; tries < 8; tries++) {
+        const r = rnd()
+        let acc = 0
+        const pick = (filtered.length ? filtered : options).find(o => (acc += o.w) >= r) || options[0]
+        const nx = x + pick.dx
+        const ny = y + pick.dy
+        if (nx < 0 || ny < 0 || nx >= this.gridW || ny >= this.gridH) continue
+        if (visited[ny][nx]) continue   // не пересекаем самих себя
+        chosen = pick
+        break
+      }
+      if (!chosen) {
+        // форсируем движение вправо если можем
+        if (x + 1 < this.gridW && !visited[y][x + 1]) {
+          chosen = { dx: 1, dy: 0, tag: 'R', w: 1 }
+        } else break
+      }
+
+      x += chosen.dx; y += chosen.dy
+      visited[y][x] = true
       pts.push(new Phaser.Math.Vector2(x, y))
 
-      // occasionally pick a new vertical target to sweep across height
-      if (rnd() < 0.08) targetY = Math.floor(this.gridH * (0.2 + rnd() * 0.6))
+      if (chosen.tag === dir) straight++
+      else { dir = chosen.tag; straight = 1 }
     }
 
+    // гарантированно доведём до правой границы
+    while (x < this.gridW - 1) {
+      x += 1
+      if (!visited[y][x]) {
+        visited[y][x] = true
+        pts.push(new Phaser.Math.Vector2(x, y))
+      }
+    }
     return pts
   }
 
-  drawPath() {
+  // пиксельная дорожка (каждая клетка пути — «плитка»)
+  drawPathPixels() {
     const g = this.add.graphics()
-    g.lineStyle(4, 0x2a3242, 1)
-    g.beginPath()
-    for (let i = 0; i < this.path.length; i++) {
-      const px = this.path[i].x * this.tile + this.tile / 2
-      const py = this.path[i].y * this.tile + this.tile / 2
-      if (i === 0) g.moveTo(px, py); else g.lineTo(px, py)
+    const pad = Math.max(2, Math.floor(this.tile * 0.18))
+    const w = this.tile - pad * 2
+    const h = this.tile - pad * 2
+    g.fillStyle(0x232a36, 1)
+    for (const v of this.path) {
+      const x = v.x * this.tile + pad
+      const y = v.y * this.tile + pad
+      g.fillRect(x, y, w, h)
     }
-    g.strokePath()
   }
 
   inGrid(x: number, y: number) { return x >= 0 && y >= 0 && x < this.gridW && y < this.gridH }
   isPath(x: number, y: number) { return this.path.some(v => v.x === x && v.y === y) }
   isOccupied(x: number, y: number) { return this.towers.some(t => t.x === x && t.y === y) }
 
-  // ---- Waves (25–60s each) ----
+  // ---------- Waves (25–60s) ----------
   startWave() {
     const rnd = mulberry32((this.seed ^ this.wave) >>> 0)
-    const waveSecs = 25 + Math.floor(rnd() * 35)  // 25..60 seconds
+    const waveSecs = 25 + Math.floor(rnd() * 35) // 25..60
+    this.waveEndsAt = this.time.now + waveSecs * 1000
+
     const totalLight = 8 + Math.floor(this.wave * 1.8)
-    const totalBatch = (this.wave % 4 === 0) ? 2 + Math.floor(this.wave / 4) : 0
+    const totalBatch = (this.wave % 4 === 0) ? (2 + Math.floor(this.wave / 4)) : 0
     const total = totalLight + totalBatch
 
-    // spawn enemies during first ~60% of wave duration
     const spawnWindow = waveSecs * 0.6
     const interval = Math.max(0.25, spawnWindow / Math.max(1, total))
     let spawned = 0
 
     this.spawning = true
-    const spawnTimer = this.time.addEvent({
+    const t = this.time.addEvent({
       delay: interval * 1000,
       loop: true,
       callback: () => {
-        if (spawned < totalLight) {
-          this.spawnEnemy('light')
-        } else if (spawned < totalLight + totalBatch) {
-          this.spawnEnemy('batch')
-        } else {
-          spawnTimer.remove(false)
-          this.spawning = false
-          this.spawnDoneAt = this.time.now
-        }
+        if (spawned < totalLight) this.spawnEnemy('light')
+        else if (spawned < total) this.spawnEnemy('batch')
+        else { this.spawning = false; t.remove(false) }
         spawned++
       }
     })
@@ -228,37 +259,30 @@ export default class MainScene extends Phaser.Scene {
     const e = this.enemies.create(px, py, key) as EnemyGO
     e.setOrigin(0.5)
     e.pathIdx = 0
-    // stats scale with wave
     e.hp = (kind === 'light') ? (14 + this.wave * 1.4) : (70 + this.wave * 9)
     e.speed = (kind === 'light') ? (80 + this.wave * 2.5) : (46 + this.wave * 1.5)
     ;(e.body as Phaser.Physics.Arcade.Body).setAllowGravity(false)
   }
 
-  // ---- Combat ----
+  // ---------- Combat ----------
   hitEnemy(p: Phaser.Types.Physics.Arcade.ImageWithDynamicBody, e: EnemyGO) {
     const dmg = 10
     e.hp -= dmg
     p.destroy()
-    if (e.hp <= 0) {
-      this.score += 10
-      e.destroy()
-    }
+    if (e.hp <= 0) { this.score += 10; e.destroy() }
   }
 
   fireFromTower(t: Tower, dt: number) {
     t.fireCooldown -= dt
     if (t.fireCooldown > 0) return
-
-    // global resource gates
     if (this.projectiles.getChildren().length >= this.vramMax) return
     if (this.rpcBucket < 1) return
     if (this.energy < t.energyCost) return
 
-    // target in range
+    // target
     const rangePx = t.range * this.tile
     const tx = t.x * this.tile + this.tile / 2
     const ty = t.y * this.tile + this.tile / 2
-
     let target: EnemyGO | null = null
     let best = Infinity
     this.enemies.getChildren().forEach((obj) => {
@@ -283,37 +307,28 @@ export default class MainScene extends Phaser.Scene {
     this.time.delayedCall(2000, () => proj && proj.destroy())
   }
 
-  // ---- Update loop ----
+  // ---------- Update ----------
   update(time: number, delta: number) {
     const dt = delta / 1000
 
-    // move enemies along path using waypoint index
+    // enemies move along waypoints
     const lastI = this.path.length - 1
     for (const obj of this.enemies.getChildren()) {
       const e = obj as EnemyGO
-      let i = Math.min(e.pathIdx, lastI - 1)
-      const a = this.path[i]
-      const b = this.path[i + 1]
+      const i = Math.min(e.pathIdx, lastI - 1)
+      const a = this.path[i], b = this.path[i + 1]
       const ax = a.x * this.tile + this.tile / 2
       const ay = a.y * this.tile + this.tile / 2
       const bx = b.x * this.tile + this.tile / 2
       const by = b.y * this.tile + this.tile / 2
-
       const ang = Phaser.Math.Angle.Between(ax, ay, bx, by)
       const step = e.speed * dt
       const nx = e.x + Math.cos(ang) * step
       const ny = e.y + Math.sin(ang) * step
       e.setPosition(nx, ny)
-
-      // advance waypoint
-      if (Phaser.Math.Distance.Between(nx, ny, bx, by) < 6 && i < lastI - 1) {
-        e.pathIdx++
-      }
-
-      // reached end?
+      if (Phaser.Math.Distance.Between(nx, ny, bx, by) < 6 && i < lastI - 1) e.pathIdx++
       if (i >= lastI - 1 && Phaser.Math.Distance.Between(nx, ny, bx, by) < 6) {
-        e.destroy()
-        this.base = Math.max(0, this.base - 1)
+        e.destroy(); this.base = Math.max(0, this.base - 1)
       }
     }
 
@@ -322,30 +337,25 @@ export default class MainScene extends Phaser.Scene {
 
     // HUD
     const nick = localStorage.getItem('nickname') || 'anon'
+    this.nickText.setText(`Nick: ${nick}`)
     this.hudText.setText(
-      `Score: ${Math.floor(this.score)}\nWave: ${this.wave}\nBase: ${this.base}\nNick: ${nick}\nVRAM: ${this.projectiles.getChildren().length}/${this.vramMax}  RPC: ${Math.floor(this.rpcBucket)}/${this.rpcPerSec}  Energy: ${Math.floor(this.energy)}`
+      `Score: ${Math.floor(this.score)}\nWave: ${this.wave}\nBase: ${this.base}\nVRAM: ${this.projectiles.getChildren().length}/${this.vramMax}  RPC: ${this.rpcBucket}/${this.rpcPerSec}  Energy: ${Math.floor(this.energy)}`
     )
 
-    // wave progression: when spawning finished AND no enemies left
-    if (!this.spawning && this.enemies.countActive(true) === 0) {
-      // short breather
-      this.time.delayedCall(1500, () => {
-        if (this.enemies.countActive(true) === 0) {
-          this.wave++
-          this.startWave()
-        }
-      })
-      this.spawning = true // prevent multiple schedules until delay passes
-    }
-
-    // timer & finish
-    const elapsed = time - this.runStart
-    const remain = Math.max(0, this.runLimitMs - elapsed)
+    // wave timer (показываем оставшееся время окна этой волны)
+    const remain = Math.max(0, this.waveEndsAt - time)
     const mm = Math.floor(remain / 60000)
     const ss = Math.floor((remain % 60000) / 1000)
     this.timerText.setText(`${mm}:${ss.toString().padStart(2, '0')}`)
 
-    if (remain <= 0 || this.base <= 0) this.finishRun()
+    // переход на следующую волну после истечения окна + когда поле очищено
+    if (time >= this.waveEndsAt && this.enemies.countActive(true) === 0 && !this.spawning) {
+      this.wave++
+      this.startWave()
+    }
+
+    // завершение ран-а
+    if ((time - this.runStart) >= this.runLimitMs || this.base <= 0) this.finishRun()
   }
 
   finishRun() {
