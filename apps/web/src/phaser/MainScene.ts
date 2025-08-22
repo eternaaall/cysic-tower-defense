@@ -23,15 +23,15 @@ type EnemyKind = 'light' | 'batch'
 type EnemyGO = Phaser.Types.Physics.Arcade.SpriteWithDynamicBody & {
   hp: number
   speed: number
-  t: number // path progress [0..1]
+  t: number
 }
 type Tower = {
   x: number; y: number
   fireCooldown: number
-  range: number // in tiles
+  range: number
   energyCost: number
   dps: number
-  kind: 'eth' // iteration-1: one tower
+  kind: 'eth'
 }
 
 export default class MainScene extends Phaser.Scene {
@@ -54,15 +54,15 @@ export default class MainScene extends Phaser.Scene {
   wave = 1
   base = 20
   runStart = 0
-  runLimitMs = 4 * 60 * 1000 // 4 minutes
+  runLimitMs = 4 * 60 * 1000
 
   // global resources
-  vramMax = 24         // max simultaneous projectiles
-  rpcPerSec = 12       // global shots/s
+  vramMax = 24
+  rpcPerSec = 12
   energyMax = 100
   energy = 100
-  energyRegen = 15     // per second
-  rpcBucket = 0        // regen per sec
+  energyRegen = 15
+  rpcBucket = 0
   credits = 150
 
   // UI
@@ -80,18 +80,13 @@ export default class MainScene extends Phaser.Scene {
   }
 
   preload() {
-    // generate 1-bit/pixel textures at runtime
     const g = this.add.graphics()
-    // enemy light (cyan square 10x10)
     g.clear().fillStyle(0x66e7ff).fillRect(0, 0, 10, 10)
     g.generateTexture('e_light', 10, 10)
-    // enemy batch (violet 12x12)
     g.clear().fillStyle(0x9d7bff).fillRect(0, 0, 12, 12)
     g.generateTexture('e_batch', 12, 12)
-    // projectile (white 3x3)
     g.clear().fillStyle(0xffffff).fillRect(0, 0, 3, 3)
     g.generateTexture('proj', 3, 3)
-    // tower (teal 12x12)
     g.clear().fillStyle(0x5eead4).fillRect(0, 0, 12, 12)
     g.generateTexture('tower', 12, 12)
     g.destroy()
@@ -99,9 +94,6 @@ export default class MainScene extends Phaser.Scene {
 
   create() {
     this.cameras.main.setBackgroundColor('#0b0b0f')
-
-    // pixel perfect render
-    this.game.config.pixelArt = true as any
 
     // draw procedural path (seeded)
     this.path = this.makePath(this.seed)
@@ -115,11 +107,10 @@ export default class MainScene extends Phaser.Scene {
     this.physics.add.overlap(this.projectiles, this.enemies, (p, e) => this.hitEnemy(p as any, e as any))
 
     // UI texts
-    this.hudText = this.add.bitmapText ? (this.add as any).bitmapText(10, 10, '', '', 12) :
-      this.add.text(10, 10, '', { fontFamily: 'monospace', fontSize: '14px', color: '#ecf0ff' })
+    this.hudText = this.add.text(10, 10, '', { fontFamily: 'monospace', fontSize: '14px', color: '#ecf0ff' })
     this.timerText = this.add.text(this.scale.width - 40, 10, '4:00', { fontFamily: 'monospace', fontSize: '14px', color: '#ecf0ff' }).setOrigin(1, 0)
 
-    // input: place tower on click (not on path)
+    // place tower on click (not on path)
     this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
       if (this.credits < 50) return
       const gx = Math.floor(p.x / this.tile)
@@ -127,7 +118,7 @@ export default class MainScene extends Phaser.Scene {
       if (!this.inGrid(gx, gy)) return
       if (this.isPath(gx, gy)) return
       if (this.isOccupied(gx, gy)) return
-      // place tower (Eth Prover)
+
       this.towers.push({
         x: gx, y: gy, fireCooldown: 0, range: 4, energyCost: 1, dps: 12, kind: 'eth'
       })
@@ -144,7 +135,7 @@ export default class MainScene extends Phaser.Scene {
     this.scheduleNextWave()
   }
 
-  // ---- Path generation: left -> right with seeded bends ----
+  // ---- Path generation ----
   makePath(seed: number) {
     const rand = mulberry32(seed >>> 0)
     const grid: boolean[][] = Array.from({ length: this.gridH }, () => Array(this.gridW).fill(false))
@@ -157,12 +148,10 @@ export default class MainScene extends Phaser.Scene {
     let steps = 0
     while (x < this.gridW - 1 && steps < maxSteps) {
       steps++
-      // forward bias to the right
       const dirs = [
-        { dx: 1, dy: 0, w: 0.6 }, // right
-        { dx: 0, dy: rand() < 0.5 ? 1 : -1, w: 0.4 } // up/down
+        { dx: 1, dy: 0, w: 0.6 },
+        { dx: 0, dy: rand() < 0.5 ? 1 : -1, w: 0.4 }
       ]
-      // try choose a direction with bounds & not revisiting
       let chosen: { dx: number, dy: number } | null = null
       for (let tries = 0; tries < 6; tries++) {
         const pick = rand() < dirs[0].w ? dirs[0] : { dx: 0, dy: rand() < 0.5 ? 1 : -1, w: 0.4 }
@@ -174,7 +163,6 @@ export default class MainScene extends Phaser.Scene {
         break
       }
       if (!chosen) {
-        // fallback: force right if possible
         if (x + 1 < this.gridW) chosen = { dx: 1, dy: 0 }
         else break
       }
@@ -182,7 +170,6 @@ export default class MainScene extends Phaser.Scene {
       p.push(new Phaser.Math.Vector2(x, y))
       grid[y][x] = true
     }
-    // ensure reach right border
     while (x < this.gridW - 1) {
       x += 1
       p.push(new Phaser.Math.Vector2(x, y))
@@ -203,29 +190,19 @@ export default class MainScene extends Phaser.Scene {
     g.strokePath()
   }
 
-  inGrid(x: number, y: number) {
-    return x >= 0 && y >= 0 && x < this.gridW && y < this.gridH
-  }
-  isPath(x: number, y: number) {
-    return this.path.some(v => v.x === x && v.y === y)
-  }
-  isOccupied(x: number, y: number) {
-    return this.towers.some(t => t.x === x && t.y === y)
-  }
+  inGrid(x: number, y: number) { return x >= 0 && y >= 0 && x < this.gridW && y < this.gridH }
+  isPath(x: number, y: number) { return this.path.some(v => v.x === x && v.y === y) }
+  isOccupied(x: number, y: number) { return this.towers.some(t => t.x === x && t.y === y) }
 
   // ---- Waves ----
-  scheduleNextWave() {
-    this.time.delayedCall(900, () => this.spawnWave(this.wave))
-  }
+  scheduleNextWave() { this.time.delayedCall(900, () => this.spawnWave(this.wave)) }
 
   spawnWave(n: number) {
     const rand = mulberry32((this.seed ^ n) >>> 0)
-    // light units
     const count = 6 + Math.floor(n * 1.2)
     for (let i = 0; i < count; i++) {
       this.time.delayedCall(350 * i, () => this.spawnEnemy('light', rand))
     }
-    // batch every 4th wave
     if (n % 4 === 0) {
       for (let i = 0; i < 3; i++) {
         this.time.delayedCall(400 * (count + i), () => this.spawnEnemy('batch', rand))
@@ -248,10 +225,8 @@ export default class MainScene extends Phaser.Scene {
 
   // ---- Combat ----
   hitEnemy(p: Phaser.Types.Physics.Arcade.ImageWithDynamicBody, e: EnemyGO) {
-    // basic damage
     const dmg = 10
     e.hp -= dmg
-    // destroy projectile (VRAM free)
     p.destroy()
     if (e.hp <= 0) {
       this.score += 10
@@ -263,13 +238,11 @@ export default class MainScene extends Phaser.Scene {
     t.fireCooldown -= dt
     if (t.fireCooldown > 0) return
 
-    // global resource checks
     const projCount = this.projectiles.getChildren().length
     if (projCount >= this.vramMax) return
     if (this.rpcBucket < 1) return
     if (this.energy < t.energyCost) return
 
-    // find target in range
     const rangePx = t.range * this.tile
     const tx = t.x * this.tile + this.tile / 2
     const ty = t.y * this.tile + this.tile / 2
@@ -283,25 +256,20 @@ export default class MainScene extends Phaser.Scene {
     })
     if (!target) return
 
-    // consume resources
     this.rpcBucket -= 1
     this.energy = Math.max(0, this.energy - t.energyCost)
-    t.fireCooldown = Math.max(0.12, 1.0 - t.dps / 20) // rough rate from DPS
+    t.fireCooldown = Math.max(0.12, 1.0 - t.dps / 20)
 
-    // spawn projectile
     const proj = this.projectiles.create(tx, ty, 'proj') as Phaser.Physics.Arcade.Image
     ;(proj.body as Phaser.Physics.Arcade.Body).setAllowGravity(false)
     const ang = Phaser.Math.Angle.Between(tx, ty, target.x, target.y)
     const spd = 220
     proj.body.velocity.x = Math.cos(ang) * spd
     proj.body.velocity.y = Math.sin(ang) * spd
-
-    // auto-destroy after 2s
     this.time.delayedCall(2000, () => proj && proj.destroy())
   }
 
   resourceTick() {
-    // regen energy + slight RPC top-up (bucket handled in separate timer)
     this.energy = Math.min(this.energyMax, this.energy + this.energyRegen)
   }
 
@@ -309,14 +277,11 @@ export default class MainScene extends Phaser.Scene {
     const dt = delta / 1000
     for (const obj of this.enemies.getChildren()) {
       const e = obj as EnemyGO
-      // move along polyline by arc-length approximation
       const speed = e.speed * dt
-      // advance along small steps
       for (let step = 0; step < 4; step++) {
         const next = this.advanceAlongPath(e.x, e.y, speed / 4)
         e.setPosition(next.x, next.y)
       }
-      // check end
       const last = this.path[this.path.length - 1]
       const lastPx = last.x * this.tile + this.tile / 2
       const lastPy = last.y * this.tile + this.tile / 2
@@ -328,7 +293,6 @@ export default class MainScene extends Phaser.Scene {
   }
 
   advanceAlongPath(x: number, y: number, dist: number) {
-    // find nearest segment, then move forward along path direction
     let closestI = 0
     let best = Infinity
     for (let i = 0; i < this.path.length - 1; i++) {
@@ -338,11 +302,9 @@ export default class MainScene extends Phaser.Scene {
       const ay = a.y * this.tile + this.tile / 2
       const bx = b.x * this.tile + this.tile / 2
       const by = b.y * this.tile + this.tile / 2
-      // distance from point to segment (manhattan-ish is fine)
       const d = Phaser.Math.Distance.Between(x, y, bx, by)
       if (d < best) { best = d; closestI = i }
     }
-    // move towards next node
     const cur = this.path[Math.min(closestI + 1, this.path.length - 1)]
     const tx = cur.x * this.tile + this.tile / 2
     const ty = cur.y * this.tile + this.tile / 2
@@ -351,32 +313,25 @@ export default class MainScene extends Phaser.Scene {
   }
 
   update(time: number, delta: number) {
-    // towers try to fire
     const dt = delta / 1000
     for (const t of this.towers) this.fireFromTower(t, dt)
-
-    // move enemies
     this.moveEnemies(delta)
 
-    // UI refresh
     const nick = localStorage.getItem('nickname') || 'anon'
     this.hudText.setText(
       `Score: ${Math.floor(this.score)}\nWave: ${this.wave}\nBase: ${this.base}\nNick: ${nick}\nVRAM: ${this.projectiles.getChildren().length}/${this.vramMax}  RPC: ${Math.floor(this.rpcBucket)}/${this.rpcPerSec}  Energy: ${Math.floor(this.energy)}`
     )
 
-    // wave completion check
     if (this.enemies.countActive(true) === 0 && this.time.now - this.runStart > 800) {
-      // start next wave after short pause
       this.wave++
       this.scheduleNextWave()
     }
 
-    // timer / end run
     const elapsed = time - this.runStart
     const remain = Math.max(0, this.runLimitMs - elapsed)
     const mm = Math.floor(remain / 60000)
     const ss = Math.floor((remain % 60000) / 1000)
-    this.timerText.setText(`${mm}:${ss.toString().padStart(2, '0')}`)
+    this.timerText.setText(`${mm}:${ss.toString().padStart(2,'0')}`)
 
     if (remain <= 0 || this.base <= 0) {
       this.finishRun()
@@ -384,7 +339,6 @@ export default class MainScene extends Phaser.Scene {
   }
 
   finishRun() {
-    // prevent multiple emits
     if ((this as any)._finished) return
     ;(this as any)._finished = true
     const durationMs = Math.min(this.runLimitMs, this.time.now - this.runStart)
